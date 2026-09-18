@@ -582,14 +582,14 @@
 
             .navbar {
                 padding: 12px 16px;
-                /* NO position relative needed - dropdown anchors to header */
             }
 
             .menu-btn {
                 display: flex;
+                position: relative;
+                z-index: 1002;
             }
 
-            /* Dropdown anchored to header (which is position:fixed) */
             .nav-links {
                 position: fixed;
                 top: 90px;
@@ -609,7 +609,7 @@
             }
 
             .nav-links.show {
-                display: flex;
+                display: flex !important;
             }
 
             .nav-links li {
@@ -898,91 +898,100 @@
 
     <script>
         // ========== MOBILE MENU TOGGLE ==========
-        var menuBtn = document.getElementById("menuBtn");
-        var navLinks = document.getElementById("navLinks");
+        document.addEventListener("DOMContentLoaded", function() {
+            var menuBtn = document.getElementById("menuBtn");
+            var navLinks = document.getElementById("navLinks");
 
-        menuBtn.onclick = function(e) {
-            e.stopPropagation();
-            navLinks.classList.toggle("show");
-            menuBtn.classList.toggle("active");
-        };
+            if (menuBtn && navLinks) {
+                menuBtn.addEventListener("click", function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    navLinks.classList.toggle("show");
+                    menuBtn.classList.toggle("active");
+                });
 
-        // Close menu when a nav link is tapped
-        var allLinks = navLinks.getElementsByTagName("a");
-        for (var i = 0; i < allLinks.length; i++) {
-            allLinks[i].onclick = function() {
-                navLinks.classList.remove("show");
-                menuBtn.classList.remove("active");
-            };
-        }
+                // Close menu when a nav link is tapped
+                var allLinks = navLinks.querySelectorAll("a");
+                allLinks.forEach(function(link) {
+                    link.addEventListener("click", function() {
+                        navLinks.classList.remove("show");
+                        menuBtn.classList.remove("active");
+                    });
+                });
 
-        // Close menu when tapping outside
-        document.addEventListener("click", function(e) {
-            if (!navLinks.contains(e.target) && !menuBtn.contains(e.target)) {
-                navLinks.classList.remove("show");
-                menuBtn.classList.remove("active");
+                // Close menu when tapping outside
+                document.addEventListener("click", function(e) {
+                    if (!navLinks.contains(e.target) && !menuBtn.contains(e.target)) {
+                        navLinks.classList.remove("show");
+                        menuBtn.classList.remove("active");
+                    }
+                });
             }
-        });
 
-        // ========== ACTIVE NAV LINK ON SCROLL ==========
-        var sections = document.querySelectorAll("section");
-        var links = document.querySelectorAll(".nav-links a");
+            // ========== ACTIVE NAV LINK ON SCROLL ==========
+            var sections = document.querySelectorAll("section");
+            var links = document.querySelectorAll(".nav-links a");
 
-        window.addEventListener("scroll", function() {
-            var current = "";
-            sections.forEach(function(section) {
-                var sectionTop = section.offsetTop - 150;
-                var sectionHeight = section.clientHeight;
-                if (window.scrollY >= sectionTop && window.scrollY < sectionTop + sectionHeight) {
-                    current = section.getAttribute("id");
-                }
+            window.addEventListener("scroll", function() {
+                var current = "";
+                sections.forEach(function(section) {
+                    var sectionTop = section.offsetTop - 150;
+                    var sectionHeight = section.clientHeight;
+                    if (window.scrollY >= sectionTop && window.scrollY < sectionTop + sectionHeight) {
+                        current = section.getAttribute("id");
+                    }
+                });
+
+                links.forEach(function(link) {
+                    link.classList.remove("active");
+                    if (link.getAttribute("href") === "#" + current) {
+                        link.classList.add("active");
+                    }
+                });
             });
 
-            links.forEach(function(link) {
-                link.classList.remove("active");
-                if (link.getAttribute("href") === "#" + current) {
-                    link.classList.add("active");
-                }
+            // ========== LIGHTBOX ==========
+            var lightbox = document.getElementById('lightbox');
+            var lightboxImg = document.getElementById('lightboxImage');
+            var lightboxCaption = document.getElementById('lightboxCaption');
+            var lightboxClose = document.getElementById('lightboxClose');
+
+            document.querySelectorAll('.portfolio-card').forEach(function(card) {
+                card.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    var imageUrl = this.getAttribute('href');
+                    var title = this.querySelector('h3') ? this.querySelector('h3').textContent : 'Project Preview';
+
+                    if (imageUrl) {
+                        lightboxImg.src = imageUrl;
+                        lightboxImg.alt = title;
+                        lightboxCaption.textContent = title;
+                        lightbox.classList.add('active');
+                        document.body.style.overflow = 'hidden';
+                    }
+                });
             });
-        });
 
-        // ========== LIGHTBOX ==========
-        var lightbox = document.getElementById('lightbox');
-        var lightboxImg = document.getElementById('lightboxImage');
-        var lightboxCaption = document.getElementById('lightboxCaption');
-        var lightboxClose = document.getElementById('lightboxClose');
-
-        document.querySelectorAll('.portfolio-card').forEach(function(card) {
-            card.addEventListener('click', function(e) {
-                e.preventDefault();
-                var imageUrl = this.getAttribute('href');
-                var title = this.querySelector('h3') ? this.querySelector('h3').textContent : 'Project Preview';
-
-                if (imageUrl) {
-                    lightboxImg.src = imageUrl;
-                    lightboxImg.alt = title;
-                    lightboxCaption.textContent = title;
-                    lightbox.classList.add('active');
-                    document.body.style.overflow = 'hidden';
-                }
-            });
-        });
-
-        function closeLightbox() {
-            lightbox.classList.remove('active');
-            document.body.style.overflow = '';
-        }
-
-        lightboxClose.addEventListener('click', closeLightbox);
-
-        lightbox.addEventListener('click', function(e) {
-            if (e.target === lightbox) closeLightbox();
-        });
-
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && lightbox.classList.contains('active')) {
-                closeLightbox();
+            function closeLightbox() {
+                lightbox.classList.remove('active');
+                document.body.style.overflow = '';
             }
+
+            if (lightboxClose) {
+                lightboxClose.addEventListener('click', closeLightbox);
+            }
+
+            if (lightbox) {
+                lightbox.addEventListener('click', function(e) {
+                    if (e.target === lightbox) closeLightbox();
+                });
+            }
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && lightbox.classList.contains('active')) {
+                    closeLightbox();
+                }
+            });
         });
     </script>
 </body>
